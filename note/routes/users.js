@@ -1,11 +1,8 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET users listing. */
-// localhost:3000/users 생략
-
 router.get('/', function(req, res, next) {
-  res.send('respond with a resource');
+  res.render('users'); // 해당 url에는 users.ejs를 보여줘라
 });
 
 module.exports = router;
