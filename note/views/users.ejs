@@ -1,15 +1,31 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <title>users.ejs</title>
-    <link rel='stylesheet' href='/stylesheets/style.css' />
+    <title>Users</title>
+    <link rel='stylesheet' href='/stylesheets/style.css'/>
   </head>
   <body>
-    <form action="/test" method="POST">
-        <h1>users</h1>
-        <p>이름 <input type="text" name="name"></p>
-        <p>번호 <input type="text" name="number"></p>
-        <p><input type="submit"></p>
-    </form>
+  <table border="1">
+    <tr style="font-size: 17px; font-weight: bold;">
+      <td>no</td>
+      <td>id</td>
+      <td>pw</td>
+      <td>name</td>
+      <td>email</td>
+      <td>address</td>
+    </tr>
+    
+    <% for(var i = 0; i < users.length; i++) { %>
+        <tr>
+          <td><%= users[i].no %></td>
+          <td><%= users[i].id %></td>
+          <td><%= users[i].password %></td>
+          <td><%= users[i].name %></td>
+          <td><%= users[i].email %></td>
+          <td><%= users[i].address %></td>
+        </tr>
+    <% } %>
+
+  </table>
   </body>
 </html>
