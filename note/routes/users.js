@@ -31,7 +31,7 @@ passport.use(new LocalStrategy({
     passwordField: 'password',
     session: true,
     passReqToCallback: true
-  }, function (req, id, password, name, done) {
+  }, function (req, id, password, done) {
     connection.query('select * from `user` where `id` = ?', id, function (err, result) {
       if (err) {
         console.log('err :' + err);
@@ -61,19 +61,15 @@ passport.use(new LocalStrategy({
 router.get('/', function(req, res) {
     var sql = "select * from user;";
     var query = connection.query(sql, function(err, rows){
-
         if(err) { throw err; }
-
         if(req.session.passport !== undefined){
             if(req.session.passport.user !== undefined){
-                
                 // 로그인 한 사용자
                 res.render( 'users', {
                     title: "MyBoard",
                     session: req.session.passport,
                     users: rows
                 });
-
             } else {
                 res.redirect('/');
             }
@@ -86,15 +82,17 @@ router.get('/', function(req, res) {
 router.get('/signup', function(req, res, next){
     if (req.session.passport !== undefined) {
         if (req.session.passport.user !== undefined) {
-          //로그인 한 사용자
+          // 로그인 한 사용자
           res.redirect('/');
         } else {
+          // 로그아웃 한 사용자
           res.render('signup', {
             title: 'MyBoard',
             session: {}
           });
         }
     } else {
+      // 처음 방문한 사용자
         res.render('signup', {
           title: 'MyBoard',
           session: {}
@@ -185,10 +183,39 @@ passport.use('kakao-login', new KakaoStrategy({
   function (accessToken, refreshToken, profile, done){
     console.log('kakao login info');
     console.log('kakao login profile');
-    return done(null, {
-      id: 'kakao',
-      name: profile.username,
-      no: profile.id
+
+    var sql = "SELECT * FROM user WHERE id = ? ";
+    connection.query(sql, profile.id, function(err, result){
+      if(err) { return done(err) }
+      var id = profile.id;
+      var password = "kakao";
+      var hashpass = crypto.createHash("sha512").update(password).digest("hex");
+      var name = profile.username;
+      var email = "kakao";
+      var address = "kakao";
+      var datas = [id, hashpass, name, email, address];
+      if(result.length == 0){
+        // 신규 유저 -> 회원가입 & 세션저장
+        console.log("===================== 신규 유저 =====================");
+        var sql = "INSERT INTO user (id, password, name, email, address) values (?, ?, ?, ?, ?)";
+        connection.query(sql, datas, function (err, result){
+          if(err) { return done(err) }
+          console.log(result);
+          return done(null, {
+            id: id,
+            name: name,
+            no: result.insertID
+          });
+        });
+      } else {
+        // 기존 가입 유저 -> 세션저장
+        console.log("=================== 기존 가입 유저 ===================");
+        return done(null, {
+          id: result[0].id,
+          name: result[0].username,
+          no: result[0].no
+        });
+      }
     });
   }
 ));
@@ -210,36 +237,26 @@ var users = [
 router.get('/', (req, res) => res.json(users));
 router.get('/:id', function(req, res) {
     var id = parseInt(req.params.id, 10);
-
+    var user = users.filter(user => user.id === id[0]);
     if(!id){
         return res.status(400).json({error:'Incorrect id'});
     }
-
-    var user = users.filter(user => user.id === id[0]);
-
     if(!user){
         return res.status(404).json({error: 'Unknown user'});
     }
-    
     return res.json(users);
-
 });
 
 router.delete('/:id', function(req, res) {
     var id = parseInt(req.params.id, 10);
-
+    var userIdx = users.findIndex(user => user.id === id);
     if(!id){
         return res.status(400).json({error:'Incorrect id'});
     }
-    
-    var userIdx = users.findIndex(user => user.id === id);
-
     if(userIdx === -1){
         return res.status(404).json({error: 'Unknown user'});
     }
-
     users.splice(userIdx, 1);
-
     return res.json(users);
 });
 

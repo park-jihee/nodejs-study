@@ -2,31 +2,52 @@
 
 var express = require('express');
 var router = express.Router();
+var mysql = require('mysql');
+var connection = mysql.createConnection({
+  host: 'localhost',
+  port: 3306,
+  user: 'root',
+  password: '1234',
+  database: 'note'
+});
+
+connection.connect();
 
 /* GET home page. localhost:3000 */
 router.get('/', function(req, res, next) {
-  console.log(JSON.stringify(req.session));
+
+  var sql = "SELECT b_no, b_title, user.name as NAME, DATE_FORMAT((b_time), '%Y-%m-%d') as b_time FROM board LEFT JOIN user on board.b_writer = user.NO order by b_no desc ";
   
-  if( req.session.passport !== undefined ){
-    if( req.session.passport.user !== undefined ){
-      //로그인 한 사용자
-      res.render('index', { title: 'MyBoard' , content: 'park-jihee Board' , session: req.session.passport});
-    } else {
-      //로그아웃 한 사용자
-      res.render('index', { title: 'MyBoard' , content: 'park-jihee Board' , session:{}});
+  var sql = connection.query(sql, function (err, rows) {
+    if (err) {
+      throw err;
     }
-  } else {
-    //처음 방문한 사용자
-    res.render('index', { title: 'MyBoard' , content: 'park-jihee Board' , session:{}});
-  }
+    if (req.session.passport !== undefined) {
+      if (req.session.passport.user !== undefined) {
+        //로그인 한 사용자
+        res.render('index', {
+          title: 'MyBoard',
+          session: req.session.passport,
+          notes:rows
+        });
+      } else {
+        res.render('index', {
+          title: 'MyBoard',
+          session: {},
+          notes:rows
+        });
+      }
+    } else {
+      res.render('index', {
+        title: 'MyBoard',
+        session: {},
+        notes:rows
+      });
+    }
+    console.log(rows);
+  });
 });
 
-router.get('/apple', function(req, res, next) {
-  res.render('index', { title: 'Apple' , content: 'content apple' });
-});
 
-router.get('/apple/orange', function(req, res, next) {
-  res.render('index', { title: 'orange' , content: 'content orange' });
-});
 
 module.exports = router;

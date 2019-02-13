@@ -213,3 +213,7 @@ box-shadow: 0 0 40px 0 #e1e1e1;
   line-height: 50px;
   text-align: center;
 }
+
+tr:hover{
+  cursor: pointer;
+}
